@@ -4,9 +4,9 @@
 		.data
 
 		.align 2
-filename:	.asciz "C:\\studia\\semestr_2\\arko\\page.bmp"
+filename:	.asciz "C:\\studia\\semestr_2\\arko\\cat.bmp"
 		.align 2
-file_end:	.asciz "C:\\studia\\semestr_2\\arko\\page_black.bmp"
+file_end:	.asciz "C:\\studia\\semestr_2\\arko\\cat_black.bmp"
 		.align 2
 header:		.space 124
 newline:	.asciz "\n"
@@ -21,19 +21,7 @@ main:
 	li a1, 0
 	ecall
 
-	# Print the file descriptor
-	li a7, 1
-	ecall
-
 	mv s11, a0  # save file descriptor
-
-	# Print debug message
-	li a7, 4
-	la a0, newline
-	ecall
-	li a7, 4
-	la a0, newline
-	ecall
 
 	# Open file to write
 	li a7, 1024
@@ -41,16 +29,7 @@ main:
 	li a1, 1
 	ecall
 
-	# Print the file descriptor
-	li a7, 1
-	ecall
-
 	mv s10, a0  # save file descriptor
-
-	# Print debug message
-	li a7, 4
-	la a0, newline
-	ecall
 
 	# Read header from read_only
 	li a7, 63
@@ -137,15 +116,14 @@ get_width:
 	mv a0, t2
 	ecall
 
-	mv s7, t2  # save
-
 	# Print debug message
 	li a7, 4
 	la a0, newline
 	ecall
 
+	mv s7, t2  # save
+
 get_height:
-	la t0, header
 	addi t1, t0, 8  # offset to height
 
 	lw t2, (t1)
@@ -155,27 +133,18 @@ get_height:
 	mv a0, t2
 	ecall
 
-	mv s6, t2  # save
-
 	# Print debug message
 	li a7, 4
 	la a0, newline
 	ecall
 
+	mv s6, t2  # save
 
-allocate_heap:  # first byte (LSB) blue, then red, then green
-
+allocate_heap:
 	mul s0, s7, s6  # pixel amount (loop)
 	slli s1, s0, 2
 
 	addi t0, s8, 14  # full offset from start
-
-	# move to pixels
-	li a7, 62
-	mv a0, s11  # file discreptor of read
-	mv a1, t0
-	li a2, 0
-	ecall
 
 	# allocate heap memory
 	li a7, 9
@@ -184,19 +153,19 @@ allocate_heap:  # first byte (LSB) blue, then red, then green
 
 	mv s4, a0  # save address of pixels
 
-	# move to pixels
-	li a7, 62
-	mv a0, s11  # file discreptor of read
-	mv a1, t0
-	li a2, 0
-	ecall
-
 	# allocate heap memory
 	li a7, 9
 	mv a0, s1
 	ecall
 
 	mv s3, a0  # save address of copy of pixels
+
+	# move to pixels
+	li a7, 62
+	mv a0, s11  # file discreptor of read
+	mv a1, t0
+	li a2, 0
+	ecall
 
 	# read copy of pixels
 	li a7, 63
@@ -217,13 +186,10 @@ allocate_heap:  # first byte (LSB) blue, then red, then green
 ################################################################################################
 
 colors:
-	#li t2, 0  # black
-	li t2, 0xFF000000
-	#li t3, 255  # white
-	li t3, 0xFFFFFFFF
+	li t2, 0xFF000000  # black
+	li t3, 0xFFFFFFFF  # white
 
 first_two_rows:
-	add t1, t0, s8  # move to start
 	add s1, s7, s7  # loop counter
 
 loop_first_two:
@@ -235,9 +201,6 @@ loop_first_two:
 	blez t4, black_first_two
 
 white_first_two:
-	#sb t3, (s4)
-	#sb t3, 1(s4)
-	#sb t3, 2(s4)
 	sw t3, (s4)
 	j loop_first_two_end
 
@@ -321,7 +284,7 @@ change_pixel:
 	# white or black
 	lbu t4, 1(s3)
 	sub t4, t4, s2
-	addi t4, t4, 10
+	addi t4, t4, 5
 	blez t4, black
 
 white:
@@ -365,12 +328,12 @@ loop_last_two_end:
 end:
 	slli s1, s0, 2
 	sub s4, s4, s1  # return pointer to start of heap
-	
+
 	# write rest to write_only
 	li a7, 64
 	mv a0, s10
 	mv a1, s4
-	mv a2, s1 # write pixels
+	mv a2, s1 # number of pixels
 	ecall
 
 	# Close file
